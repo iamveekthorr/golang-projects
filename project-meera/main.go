@@ -46,13 +46,26 @@ func (a *Arg) Set(val string) error {
 
 func main() {
 	var arg string
+
+	// Define usage for stdout
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: meera --path <path>\n\n")
+		fmt.Fprintf(os.Stderr, "Flags:\n")
+		flag.PrintDefaults()
+	}
+
 	flag.StringVar(&arg, "path", "", "Search path")
+	flag.StringVar(&arg, "help", "", "Find help docs")
+
 	if err := flag.CommandLine.Parse(os.Args[1:]); err != nil {
-		if err == flag.ErrHelp {
-			flag.Usage()
-			os.Exit(1)
-		}
-		fmt.Println("Error:", err)
+		flag.Usage()
+		os.Exit(2)
+	}
+
+	// If nothing was provided as the value of an argument
+	if len(strings.TrimSpace(arg)) == 0 {
+		fmt.Printf("%v", arg)
+		flag.Usage()
 		os.Exit(2)
 	}
 
