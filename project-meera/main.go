@@ -67,7 +67,7 @@ func main() {
 		flag.PrintDefaults()
 	}
 
-	flag.StringVar(&arg, "path", "", "Search path")
+	flag.StringVar(&arg, "path", ".", "Search path") // Default path to current directory using (.) dot notation
 	flag.StringVar(&arg, "filename", "", "name of the file to be found")
 	flag.StringVar(&arg, "help", "", "Find help docs")
 
@@ -82,13 +82,22 @@ func main() {
 		os.Exit(2)
 	}
 
-	// TODO: Search the directory presented for the file
-	// TODO: extract info for the video from the directory as JSON.
-	rootDir := "."
-	err := filepath.WalkDir(rootDir, traverse)
+	flag.Visit(func(f *flag.Flag) {
+		switch strings.ToLower(f.Name) {
+		case "path":
+			fmt.Printf("%s", arg)
+		case "filename":
+			// Search the current directory presented for the file
+			// TODO: extract info for the video from the directory as JSON.
+			rootDir := "."
+			err := filepath.WalkDir(rootDir, traverse)
 
-	if err != nil {
-		log.Printf("error -> %s", err)
-	}
+			if err != nil {
+				log.Printf("error -> %s", err)
+			}
+			fmt.Printf("\nflag name is %s and value is %s", f.Name, f.Value)
+		}
+
+	})
 
 }
