@@ -6,8 +6,11 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
-	"os"
 	"path/filepath"
+
+	// "log"
+	"os"
+	// "path/filepath"
 	"strings"
 )
 
@@ -47,18 +50,46 @@ func (a *Arg) Set(val string) error {
 	return nil
 }
 
-func traverse(path string, fs fs.DirEntry, err error) error {
-	if err != nil {
-		return err
+type Result struct {
+	FileName    string
+	FileDetails fs.FileInfo
+}
+
+func traverse(filename string, result *Result) fs.WalkDirFunc {
+	return func(path string, fd fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if fd.Name() == filename {
+			info, err := fd.Info()
+			if err != nil {
+				return err
+			}
+			log.Printf("%v", filepath.Ext(filename))
+
+			*result = Result{
+				FileName:    path,
+				FileDetails: info,
+			}
+
+			return filepath.SkipAll
+		}
+
+		return nil
 	}
+}
 
-	fmt.Printf("%v", fs)
+func findFile(root, filename string) (Result, error) {
+	var result Result
+	err := filepath.WalkDir(root, traverse(filename, &result))
 
-	return nil
+	return result, err
 }
 
 func main() {
-	var arg string
+	var filename string
+	var pathname string
 
 	// Define usage for stdout
 	flag.Usage = func() {
@@ -67,37 +98,27 @@ func main() {
 		flag.PrintDefaults()
 	}
 
-	flag.StringVar(&arg, "path", ".", "Search path") // Default path to current directory using (.) dot notation
-	flag.StringVar(&arg, "filename", "", "name of the file to be found")
-	flag.StringVar(&arg, "help", "", "Find help docs")
+	flag.StringVar(&pathname, "path", ".", "Search path") // Default path to current directory using (.) dot notation
+	flag.StringVar(&filename, "filename", "", "name of the file to be found")
+	// flag.StringVar(&arg, "help", "", "Find help docs")
 
+	// flag.Parse()
 	if err := flag.CommandLine.Parse(os.Args[1:]); err != nil {
 		flag.Usage()
 		os.Exit(2)
 	}
 
-	// If nothing was provided as the value of an argument
-	if len(strings.TrimSpace(arg)) == 0 {
+	// If nothing was provided as the value of filename
+	if len(strings.TrimSpace(filename)) == 0 {
 		flag.Usage()
 		os.Exit(2)
 	}
 
-	flag.Visit(func(f *flag.Flag) {
-		switch strings.ToLower(f.Name) {
-		case "path":
-			fmt.Printf("%s", arg)
-		case "filename":
-			// Search the current directory presented for the file
-			// TODO: extract info for the video from the directory as JSON.
-			rootDir := "."
-			err := filepath.WalkDir(rootDir, traverse)
+	ok, err := findFile(pathname, filename)
+	if err != nil {
+		log.Printf("%v", filename)
+	}
 
-			if err != nil {
-				log.Printf("error -> %s", err)
-			}
-			fmt.Printf("\nflag name is %s and value is %s", f.Name, f.Value)
-		}
-
-	})
+	log.Printf("ok value -> %v", ok.FileDetails.Size())
 
 }
