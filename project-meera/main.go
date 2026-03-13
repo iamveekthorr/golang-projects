@@ -2,15 +2,15 @@
 package main
 
 import (
+	// "errors"
 	"flag"
 	"fmt"
 	"io/fs"
 	"log"
+
 	"path/filepath"
 
-	// "log"
 	"os"
-	// "path/filepath"
 	"strings"
 )
 
@@ -21,34 +21,6 @@ const (
 	Help
 	Path
 )
-
-func (a Arg) String() string {
-	return [...]string{"Help", "Path", "Invalid"}[a]
-}
-
-func ParseArgs(a string) (Arg, error) {
-	switch strings.ToLower(a) {
-	case "help":
-		return Help, nil
-	case "path":
-		return Path, nil
-	default:
-		return Invalid, fmt.Errorf("invalid Argument provided: %q", a)
-	}
-
-}
-
-func (a *Arg) Set(val string) error {
-	parsed, err := ParseArgs(val)
-
-	if err != nil {
-		return err
-	}
-
-	*a = parsed
-
-	return nil
-}
 
 type Result struct {
 	FileName    string
@@ -61,18 +33,35 @@ func traverse(filename string, result *Result) fs.WalkDirFunc {
 			return err
 		}
 
+		log.Printf("path -> %s", fd)
+
+		extensions := map[string]bool{
+			".mp4":  true,
+			".mkv":  true,
+			".avi":  true,
+			".mov":  true,
+			".wmv":  true,
+			".webm": true,
+		}
+
 		if fd.Name() == filename {
 			info, err := fd.Info()
 			if err != nil {
 				return err
 			}
-			log.Printf("%v", filepath.Ext(filename))
+
+			// extract the file extension
+			ext := filepath.Ext(filename)
+			if !extensions[ext] {
+				log.Println("file extension in the error -> %s" + ext)
+				return nil
+			}
+			log.Println("%s" + ext)
 
 			*result = Result{
 				FileName:    path,
 				FileDetails: info,
 			}
-
 			return filepath.SkipAll
 		}
 
@@ -100,7 +89,6 @@ func main() {
 
 	flag.StringVar(&pathname, "path", ".", "Search path") // Default path to current directory using (.) dot notation
 	flag.StringVar(&filename, "filename", "", "name of the file to be found")
-	// flag.StringVar(&arg, "help", "", "Find help docs")
 
 	// flag.Parse()
 	if err := flag.CommandLine.Parse(os.Args[1:]); err != nil {
@@ -114,11 +102,16 @@ func main() {
 		os.Exit(2)
 	}
 
-	ok, err := findFile(pathname, filename)
+	result, err := findFile(pathname, filename)
 	if err != nil {
 		log.Printf("%v", filename)
 	}
 
-	log.Printf("ok value -> %v", ok.FileDetails.Size())
+	if result.FileName == "" {
+		log.Printf("file not found: %s", filename)
+		os.Exit(1)
+	}
+
+	log.Printf("ok value -> %s %s", result, pathname)
 
 }

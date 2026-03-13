@@ -74,8 +74,8 @@ func main() {
 	x := []int{1, 2, 3, 4, 5}
 	fmt.Println("x:", x[:2])
 
-	var s string = "Hello 🌞"
-	fmt.Println(len(s), "length of the string")
+	var st string = "Hello 🌞"
+	fmt.Println(len(st), "length of the string")
 
 	true := true
 	fmt.Println(true)
@@ -90,12 +90,12 @@ func main() {
 
 	fmt.Println(f2(adderInst, 20))
 
-	var i int = 200
-	var s Score = 100
-	var hs HighScore = 300
-
-	s = Score(i)
-	hs = HighScore(s)
+	// var i int = 200
+	// var s Score = 100
+	// var hs HighScore = 300
+	//
+	// s = Score(i)
+	// hs = HighScore(s)
 
 }
 
