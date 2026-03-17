@@ -44,7 +44,8 @@ func traverse(filename string, result *Result) fs.WalkDirFunc {
 			".webm": true,
 		}
 
-		if fd.Name() == filename {
+		// Ignore case for each string.
+		if strings.EqualFold(fd.Name(), filename) {
 			info, err := fd.Info()
 			if err != nil {
 				return err
