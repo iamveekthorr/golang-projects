@@ -2,7 +2,6 @@
 package main
 
 import (
-	// "errors"
 	"flag"
 	"fmt"
 	"io/fs"
@@ -33,8 +32,6 @@ func traverse(filename string, result *Result) fs.WalkDirFunc {
 			return err
 		}
 
-		log.Printf("path -> %s", fd)
-
 		extensions := map[string]bool{
 			".mp4":  true,
 			".mkv":  true,
@@ -54,16 +51,20 @@ func traverse(filename string, result *Result) fs.WalkDirFunc {
 			// extract the file extension
 			ext := filepath.Ext(filename)
 			if !extensions[ext] {
-				log.Println("file extension in the error -> %s" + ext)
+				log.Println("file extension in the error -> " + ext)
 				return nil
 			}
-			log.Println("%s" + ext)
 
-			*result = Result{
-				FileName:    path,
-				FileDetails: info,
+			if strings.Contains(fd.Name(), filename) {
+				log.Println("File found -> " + filename)
+				*result = Result{
+					FileName:    path,
+					FileDetails: info,
+				}
+				return filepath.SkipAll
 			}
-			return filepath.SkipAll
+			return nil
+
 		}
 
 		return nil
